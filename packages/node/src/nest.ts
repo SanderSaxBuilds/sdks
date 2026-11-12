@@ -3,7 +3,7 @@ import type { DynamicModule } from "@nestjs/common";
 import { PostShiba } from "./index.js";
 import type { PostShibaOptions, SendEmailRequest } from "./index.js";
 
-export { PostShiba, PostShibaError, PostShibaTimeoutError } from "./index.js";
+export { PostShiba, PostShibaError, PostShibaTimeoutError, PostShibaWebhookError } from "./index.js";
 export type { Id, Json, PostShibaOptions } from "./index.js";
 
 export const POSTSHIBA = "POSTSHIBA";

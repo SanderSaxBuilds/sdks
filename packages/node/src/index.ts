@@ -1,4 +1,5 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { unwrapWebhook, verifySignature } from "./webhooks.js";
+import type { WebhookBody, WebhookEvent, WebhookHeaders, WebhookVerifyOptions } from "./webhooks.js";
 
 import type {
   Analytics,
@@ -78,6 +79,14 @@ import type {
 } from "./types.js";
 
 export type * from "./types.js";
+export { PostShibaWebhookError, unwrapWebhook, verifySignature as verifyWebhookSignature } from "./webhooks.js";
+export type {
+  WebhookBody,
+  WebhookErrorCode,
+  WebhookEvent,
+  WebhookHeaders,
+  WebhookVerifyOptions,
+} from "./webhooks.js";
 
 export type PostShibaOptions = {
   baseUrl?: string;
@@ -550,8 +559,28 @@ export class PostShiba {
     /** Sends one signed test event to the endpoint now and returns the endpoint's reply code. */
     sendTest: (id: Id, options?: RequestOptions) =>
       this.request<WebhookTestResult>("POST", `/api/v1/webhook_endpoints/${id}/send_test`, { options }),
-    verify: (rawBody: string, timestamp: string, signature: string, secret: string) =>
-      verifySignature(rawBody, timestamp, signature, secret),
+    /**
+     * Checks a webhook signature synchronously and returns `true` or `false`.
+     * It does not check the timestamp's age. `unwrap` does, and also reads the
+     * headers and parses the body.
+     */
+    verify: (
+      rawBody: WebhookBody,
+      timestamp: string | null | undefined,
+      signature: string | null | undefined,
+      secret: string,
+    ): boolean => verifySignature(rawBody, timestamp, signature, secret),
+    /**
+     * Verifies a webhook request and returns its parsed body. Throws
+     * `PostShibaWebhookError` on a missing header, a timestamp outside
+     * `tolerance` (300 seconds by default) or a bad signature.
+     */
+    unwrap: <T = WebhookEvent[]>(
+      rawBody: WebhookBody,
+      headers: WebhookHeaders,
+      secret: string,
+      options?: WebhookVerifyOptions,
+    ): Promise<T> => unwrapWebhook<T>(rawBody, headers, secret, options),
   };
 
   readonly templates = {
@@ -646,13 +675,4 @@ export class PostShiba {
     rotateSecret: (id: Id, options?: RequestOptions) =>
       this.request<ShieldSite>("POST", `/api/v1/shield_sites/${id}/rotate_secret`, { options }),
   };
-}
-
-function verifySignature(rawBody: string, timestamp: string, signature: string, secret: string): boolean {
-  const given = signature.replace(/^sha256=/, "");
-  const expected = createHmac("sha256", secret).update(`${timestamp}.${rawBody}`).digest("hex");
-  const a = Buffer.from(expected);
-  const b = Buffer.from(given);
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
 }
