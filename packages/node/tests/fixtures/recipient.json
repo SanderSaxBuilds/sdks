@@ -1,0 +1,24 @@
+{
+  "email": "dest@example.com",
+  "can_receive": false,
+  "suppressions": [
+    {
+      "id": "YtReWq",
+      "email": "blocked@example.com",
+      "reason": "manual",
+      "tenant_id": "WbLcFd",
+      "tenant": "default",
+      "created_at": "2026-08-30T00:00:00Z"
+    }
+  ],
+  "firewall": null,
+  "sends": [
+    {
+      "id": "JkLmNp",
+      "event_type": "dropped",
+      "message_id": null,
+      "occurred_at": "2026-08-29T00:00:00Z",
+      "explanation": "We did not send this message because the address is on your suppression list."
+    }
+  ]
+}

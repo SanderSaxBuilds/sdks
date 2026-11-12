@@ -1,0 +1,22 @@
+{
+  "id": "JkLmNp",
+  "event_type": "delivered",
+  "recipient": "dest@example.com",
+  "sender": "hello@mail.example.com",
+  "message_id": "abc",
+  "mx_provider": "gmail",
+  "sending_ip": "203.0.113.10",
+  "bounce_classification": null,
+  "bounce_reason": null,
+  "smtp_code": null,
+  "enhanced_code": null,
+  "explanation": null,
+  "occurred_at": "2026-08-29T00:00:00Z",
+  "drain_status": "pending",
+  "tenant_id": "WbLcFd",
+  "sending_domain_id": "HsVtYk",
+  "node_id": "ZxHvTb",
+  "payload": {
+    "event": "delivered"
+  }
+}

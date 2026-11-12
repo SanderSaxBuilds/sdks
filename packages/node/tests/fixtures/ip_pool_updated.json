@@ -1,0 +1,22 @@
+{
+  "id": "PoOlIp",
+  "name": "site_123_bulk",
+  "classification": "bulk",
+  "warmup_overflow": false,
+  "ips": [
+    {
+      "id": "IpQwEr",
+      "address": "198.51.100.10",
+      "status": "warming",
+      "warmup_ends_at": "2026-10-23T12:00:00Z",
+      "warmup_mode": "standard",
+      "warmup_daily_cap": 100,
+      "warmup_hold": null,
+      "weight": 100
+    }
+  ],
+  "cluster_ids": [
+    "NmQpXr"
+  ],
+  "created_at": "2026-10-09T12:00:00Z"
+}

@@ -1,0 +1,33 @@
+{
+  "retention_days": 45,
+  "options": [
+    {
+      "days": 0,
+      "price_per_1000_cents": 0
+    },
+    {
+      "days": 7,
+      "price_per_1000_cents": 6.5
+    },
+    {
+      "days": 28,
+      "price_per_1000_cents": 6.5
+    },
+    {
+      "days": 45,
+      "price_per_1000_cents": 6.5
+    },
+    {
+      "days": 90,
+      "price_per_1000_cents": 6.5
+    },
+    {
+      "days": 180,
+      "price_per_1000_cents": 13
+    },
+    {
+      "days": 365,
+      "price_per_1000_cents": 26
+    }
+  ]
+}

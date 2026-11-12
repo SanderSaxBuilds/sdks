@@ -1,0 +1,14 @@
+{
+  "id": "PqRzMn",
+  "name": "agent",
+  "address": "inbabc123@inbound.capsule.test",
+  "local_part": "inbabc123",
+  "host": "inbound.capsule.test",
+  "tenant_id": "WbLcFd",
+  "webhook_url": "https://hooks.example.com/mail",
+  "webhook_format": "json",
+  "mx_status": "not_required",
+  "inbound_emails_per_hour": 25,
+  "retention_hours": 168,
+  "stored_bytes": 48213904
+}

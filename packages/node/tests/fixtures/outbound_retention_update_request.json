@@ -1,0 +1,5 @@
+{
+  "team": {
+    "outbound_retention_days": 45
+  }
+}

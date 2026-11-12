@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "response_code": 200,
+  "error": null,
+  "endpoint": {
+    "id": "CdFgHj",
+    "url": "https://hooks.example.com/capsule",
+    "enabled": true,
+    "cluster_id": null,
+    "tenant_id": null,
+    "event_types": [
+      "processed",
+      "dropped",
+      "deferred",
+      "bounce",
+      "delivered",
+      "spamreport",
+      "unsubscribe"
+    ],
+    "last_success_at": "2026-10-12T02:00:00.000Z",
+    "last_failure_at": null,
+    "consecutive_failures": 0,
+    "status": "up",
+    "next_canary_at": null
+  }
+}

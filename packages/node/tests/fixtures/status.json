@@ -1,0 +1,14 @@
+{
+  "suspended": false,
+  "kyc_status": "approved",
+  "clusters_at_cap": [
+    {
+      "id": "NmQpXr",
+      "name": "outbound",
+      "hourly_remaining": 0,
+      "daily_remaining": 12,
+      "queued": 15
+    }
+  ],
+  "held_tenants": []
+}

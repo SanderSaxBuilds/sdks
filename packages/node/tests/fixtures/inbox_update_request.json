@@ -1,0 +1,6 @@
+{
+  "inbox": {
+    "webhook_url": "https://hooks.example.com/mail",
+    "webhook_format": "json"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "ShLdSt",
+  "name": "Signup",
+  "public_key": "ss_pk_7Fm2Qx9Lt4Wd8Nc1Hv6Bs3Kz",
+  "allowed_hostnames": [
+    "acme.com",
+    "app.acme.com"
+  ],
+  "block_hosting": true,
+  "block_free_email": false,
+  "require_liveness": false,
+  "allowlist": [
+    "203.0.113.7",
+    "partner.example"
+  ],
+  "verifications_7d": {
+    "passed": 128,
+    "blocked": 9
+  },
+  "created_at": "2026-09-23T00:00:00Z",
+  "secret_key": "ss_sk_2w9Qh4Lk8Xz1Vn6Rb3Tm7Pc5"
+}

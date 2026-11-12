@@ -160,6 +160,13 @@ export type ExtendBoostRequest = {
   idempotency_key?: string;
 };
 
+export type AutoBoostRequest = {
+  /** Boost SKU to buy when the cluster reaches its cap. `null` turns auto boost off. */
+  sku: string | null;
+  /** Most auto boosts per calendar month. */
+  monthly_limit?: number;
+};
+
 // Network
 
 export type NetworkIp = {
@@ -205,6 +212,67 @@ export type NetworkReleaseRequest = {
   ip_address_id: Id;
 };
 
+export type NetworkWarmupRequest = {
+  ip_address_id: Id;
+  warmup_mode: WarmupMode;
+};
+
+export type NetworkQuery = {
+  classification?: Classification;
+  cluster_id?: Id;
+};
+
+// IP pools
+
+export type IpPoolIp = {
+  id: Id;
+  address?: string | null;
+  status?: string;
+  warmup_ends_at?: string | null;
+  warmup_mode?: WarmupMode;
+  warmup_daily_cap?: number | null;
+  warmup_hold?: "idle" | "deferred" | "bounce" | "spamreport" | null;
+  weight?: number;
+};
+
+export type IpPool = {
+  id: Id;
+  name?: string;
+  classification?: Classification;
+  warmup_overflow?: boolean;
+  ips?: IpPoolIp[];
+  cluster_ids?: Id[];
+  created_at?: string;
+};
+
+export type CreateIpPoolRequest = {
+  name: string;
+  classification: Classification;
+  warmup_overflow?: boolean;
+};
+
+export type UpdateIpPoolRequest = {
+  name?: string;
+  warmup_overflow?: boolean;
+};
+
+export type IpPoolAddIpRequest = {
+  ip_address_id: Id;
+  weight?: number;
+};
+
+export type IpPoolRemoveIpRequest = {
+  ip_address_id: Id;
+};
+
+export type IpPoolClusterRequest = {
+  cluster_id: Id;
+};
+
+export type IpPoolQuery = {
+  classification?: Classification;
+};
+
 // Sending domains
 
 export type SendingDomain = {
@@ -227,6 +295,7 @@ export type SendingDomain = {
   return_path_target?: string;
   last_verification_error?: string | null;
   suspended?: boolean;
+  suspended_reason?: string | null;
   operator_held?: boolean;
   primary?: boolean;
   queued_messages?: number;
@@ -241,6 +310,12 @@ export type CreateSendingDomainRequest = {
     /** PEM. Write-only: responses never include it. */
     dkim_private_key?: string;
     tenant_id?: Id;
+  };
+};
+
+export type MoveSendingDomainRequest = {
+  sending_domain: {
+    tenant_id: Id;
   };
 };
 
@@ -267,6 +342,17 @@ export type CreateTenantRequest = {
     name: string;
     slug?: string;
   };
+};
+
+export type UpdateTenantRequest = {
+  tenant: {
+    suppress_hard_bounces?: boolean;
+  };
+};
+
+export type DeleteTenantOptions = {
+  /** Tenant that takes over the deleted tenant's domains, credentials and inboxes. */
+  destination_tenant_id?: Id;
 };
 
 // Inboxes and inbound messages
@@ -302,6 +388,15 @@ export type CreateInboxRequest = {
     forward_to?: string;
     webhook_url?: string;
     webhook_format?: string;
+  };
+};
+
+export type UpdateInboxRequest = {
+  inbox: {
+    name?: string;
+    webhook_url?: string;
+    webhook_format?: string;
+    forward_to?: string;
   };
 };
 
@@ -342,6 +437,66 @@ export type InboundMessage = {
   raw?: string | null;
 };
 
+// Outbound messages
+
+export type OutboundMessage = {
+  id: Id;
+  message_id?: string;
+  from?: string | null;
+  to?: string[];
+  cc?: string[];
+  bcc?: string[];
+  subject?: string | null;
+  source?: "api" | "account" | "template_test";
+  sandbox?: boolean;
+  bytesize?: number;
+  retention_days?: number;
+  cluster_id?: Id | null;
+  tenant_id?: Id | null;
+  created_at?: string;
+  expires_at?: string;
+  /** Present on show. */
+  text?: string | null;
+  /** Present on show. */
+  html?: string | null;
+  /** Present on show. */
+  attachments?: Array<{ filename?: string | null; content_type?: string | null; size?: number }>;
+};
+
+export type OutboundMessageQuery = {
+  /** Search text. */
+  q?: string;
+  /** Cursor: only messages older than this id. */
+  before?: Id;
+  limit?: number;
+};
+
+export type RetentionDays = 0 | 7 | 28 | 45 | 90 | 180 | 365;
+
+export type OutboundRetention = {
+  retention_days?: number;
+  options?: Array<{ days?: number; price_per_1000_cents?: number }>;
+};
+
+export type UpdateOutboundRetentionRequest = {
+  team: {
+    outbound_retention_days: RetentionDays;
+  };
+};
+
+// DKIM signing
+
+export type DkimSigning = {
+  sign_with_primary_domain?: boolean;
+  primary_domain?: string | null;
+};
+
+export type UpdateDkimSigningRequest = {
+  team: {
+    sign_with_primary_domain: boolean;
+  };
+};
+
 // Events
 
 export type MessageEvent = {
@@ -364,6 +519,101 @@ export type MessageEvent = {
   node_id?: Id | null;
   /** Omitted for Support keys. */
   payload?: Record<string, unknown>;
+};
+
+/** Filters for event lists. Events are cursor-paginated with `after` or `before`. */
+export type EventQuery = {
+  message_id?: string;
+  recipient?: string;
+  mx_provider?: string;
+  sending_ip?: string;
+  tenant_id?: Id;
+  sending_domain_id?: Id;
+  event_type?: string;
+  since?: string;
+  until?: string;
+  query?: string;
+  /** Up to 1000. Default 200. */
+  limit?: number;
+  before?: Id;
+  after?: Id;
+};
+
+export type TeamEventQuery = EventQuery & {
+  cluster_id?: Id;
+};
+
+// Recipients, analytics and status
+
+export type RecipientSend = {
+  id: Id;
+  event_type?: string;
+  message_id?: string | null;
+  occurred_at?: string;
+  explanation?: string | null;
+};
+
+export type Recipient = {
+  email?: string;
+  can_receive?: boolean;
+  suppressions?: Suppression[];
+  firewall?: string | null;
+  sends?: RecipientSend[];
+};
+
+export type AnalyticsCounts = {
+  processed?: number;
+  delivered?: number;
+  deferred?: number;
+  bounce?: number;
+  spamreport?: number;
+  unsubscribe?: number;
+};
+
+export type AnalyticsRow = AnalyticsCounts & {
+  key?: string | null;
+  label?: string | null;
+};
+
+export type AnalyticsWindow = {
+  since?: string;
+  until?: string;
+};
+
+export type Analytics = {
+  dimension?: string;
+  window?: AnalyticsWindow;
+  totals?: AnalyticsCounts;
+  rows?: AnalyticsRow[];
+  /** Present when the query asks for a comparison window. */
+  compare?: {
+    window?: AnalyticsWindow;
+    totals?: AnalyticsCounts;
+    rows?: AnalyticsRow[];
+  };
+};
+
+export type AnalyticsQuery = {
+  since?: string;
+  until?: string;
+  dimension?: string;
+  min_processed?: number;
+  compare?: boolean;
+  compare_since?: string;
+  compare_until?: string;
+};
+
+export type TeamStatus = {
+  suspended?: boolean;
+  kyc_status?: string | null;
+  clusters_at_cap?: Array<{
+    id: Id;
+    name?: string;
+    hourly_remaining?: number;
+    daily_remaining?: number;
+    queued?: number;
+  }>;
+  held_tenants?: Array<{ id: Id; slug?: string }>;
 };
 
 // SMTP credentials
@@ -433,6 +683,13 @@ export type UpdateWebhookEndpointRequest = {
     cluster_id?: Id | null;
     tenant_id?: Id | null;
   };
+};
+
+export type WebhookTestResult = {
+  ok?: boolean;
+  response_code?: number | null;
+  error?: string | null;
+  endpoint?: WebhookEndpoint;
 };
 
 // Templates
@@ -507,6 +764,28 @@ export type SuppressionImport = {
   invalid?: number;
 };
 
+export type SuppressionQuery = {
+  email?: string;
+  /** Cursor: the last id you saw. */
+  after?: Id;
+  /** Up to 1000. Default 100. */
+  limit?: number;
+};
+
+export type BulkDeleteSuppressionsRequest = {
+  emails?: string[];
+  reason?: SuppressionReason;
+  tenant_id?: Id;
+  /** ISO 8601 time. Only suppressions created before it. */
+  before?: string;
+};
+
+export type SuppressionBulkDelete = {
+  deleted?: number;
+  /** `true` when more rows match. Call again to delete the next batch. */
+  more?: boolean;
+};
+
 // Firewall
 
 export type FirewallEntry = {
@@ -533,6 +812,42 @@ export type CreateFirewallEntryRequest = {
     list: string;
     value: string;
   };
+};
+
+// ShieldShiba
+
+export type ShieldSite = {
+  id: Id;
+  name?: string;
+  public_key?: string;
+  allowed_hostnames?: string[];
+  block_hosting?: boolean;
+  block_free_email?: boolean;
+  require_liveness?: boolean;
+  allowlist?: string[];
+  verifications_7d?: { passed?: number; blocked?: number };
+  created_at?: string;
+  /** Present on create, show and rotate only. */
+  secret_key?: string;
+};
+
+export type ShieldSiteFields = {
+  name?: string;
+  /** A list, or one comma-separated string. */
+  allowed_hostnames?: string | string[];
+  block_hosting?: boolean;
+  block_free_email?: boolean;
+  require_liveness?: boolean;
+  /** A list, or one comma-separated string. */
+  allowlist?: string | string[];
+};
+
+export type CreateShieldSiteRequest = {
+  shield_site: ShieldSiteFields & { name: string };
+};
+
+export type UpdateShieldSiteRequest = {
+  shield_site: ShieldSiteFields;
 };
 
 // Errors

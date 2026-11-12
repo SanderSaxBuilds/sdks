@@ -1,0 +1,17 @@
+{
+  "id": "IpQwEr",
+  "address": "203.0.113.x",
+  "status": "active",
+  "warmup_ends_at": null,
+  "warmup_mode": "standard",
+  "warmup_daily_cap": null,
+  "warmup_hold": null,
+  "kind": "shared",
+  "classification": "transactional",
+  "provider": "aws",
+  "owned": false,
+  "available": true,
+  "cluster_ids": [],
+  "ip_pool_ids": [],
+  "feedback_loops": []
+}

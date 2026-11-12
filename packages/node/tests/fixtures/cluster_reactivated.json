@@ -1,0 +1,54 @@
+{
+  "id": "NmQpXr",
+  "name": "edge",
+  "region": "manual",
+  "size": "small",
+  "plan": "nano",
+  "emails_per_hour": 100,
+  "emails_per_day": 600,
+  "base_emails_per_hour": 100,
+  "base_emails_per_day": 600,
+  "boost": null,
+  "auto_boost": {
+    "sku": null,
+    "monthly_limit": 3,
+    "used_this_month": 0
+  },
+  "ip_assignment": "shared",
+  "desired_status": "active",
+  "status": "active",
+  "smtp_endpoint": "smtp.capsule.test:587",
+  "http_endpoint": "smtp.capsule.test:8000",
+  "classification": "transactional",
+  "assigned_ip": {
+    "address": "203.0.113.2",
+    "status": "active"
+  },
+  "sending_ips": [
+    {
+      "id": "IpQwEr",
+      "address": "203.0.113.2",
+      "status": "active",
+      "kind": "shared",
+      "classification": "transactional",
+      "weight": 100,
+      "provider": null
+    }
+  ],
+  "ip_pools": [
+    {
+      "id": "PoOlIp",
+      "name": "site_123"
+    }
+  ],
+  "sending_ready": true,
+  "refused_sends": [
+    {
+      "smtp_username": "smtp_a1b2c3d4e5f6a7b8",
+      "reason": "unavailable",
+      "count": 412,
+      "first_at": "2026-09-27T14:02:10Z",
+      "last_at": "2026-09-27T14:16:03Z"
+    }
+  ]
+}

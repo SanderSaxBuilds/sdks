@@ -3,24 +3,34 @@
 import { describe, expectTypeOf, it } from "vitest";
 import { PostShiba } from "../src/index.js";
 import type {
+  Analytics,
   Cluster,
+  DkimSigning,
   EmailTemplate,
   Empty,
   Firewall,
   FirewallEntry,
   InboundMessage,
   Inbox,
+  IpPool,
   MessageEvent,
   NetworkIp,
+  OutboundMessage,
+  OutboundRetention,
+  Recipient,
   SendEmailRequest,
   SendEmailResponse,
   SendingDomain,
+  ShieldSite,
   SmtpCredential,
   Suppression,
+  SuppressionBulkDelete,
   SuppressionImport,
+  TeamStatus,
   Tenant,
   User,
   WebhookEndpoint,
+  WebhookTestResult,
 } from "../src/index.js";
 
 
@@ -118,6 +128,53 @@ describe("types", () => {
     expectTypeOf<Matches<typeof import("../../../fixtures/catalog/firewall_entry_create_request.json"), Parameters<C["firewall"]["addEntry"]>[0]>>().toEqualTypeOf<true>();
   });
 
+  it("describe every package fixture for the endpoints beyond the shared catalog", () => {
+    type C = PostShiba;
+    expectTypeOf<Matches<typeof import("./fixtures/analytics.json"), Analytics>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/cluster_auto_boosted.json"), Cluster>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/cluster_reactivated.json"), Cluster>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/dkim_signing.json"), DkimSigning>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/dkim_signing_updated.json"), DkimSigning>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/event_index.json"), MessageEvent>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/inbox_updated.json"), Inbox>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/ip_pool.json"), IpPool>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/ip_pool_created.json"), IpPool>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/ip_pool_deleted.json"), IpPool>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/ip_pool_ip_removed.json"), IpPool>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/ip_pool_updated.json"), IpPool>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/network_index.json"), NetworkIp>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/network_warming.json"), NetworkIp>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/outbound_message.json"), OutboundMessage>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/outbound_message_index.json"), OutboundMessage>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/outbound_retention.json"), OutboundRetention>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/recipient.json"), Recipient>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/sending_domain_flushed.json"), SendingDomain>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/sending_domain_moved.json"), SendingDomain>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/shield_site.json"), ShieldSite>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/shield_site_index.json"), ShieldSite>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/shield_site_rotated.json"), ShieldSite>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/shield_site_updated.json"), ShieldSite>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/status.json"), TeamStatus>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/suppression_bulk_delete.json"), SuppressionBulkDelete>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/tenant_updated.json"), Tenant>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/webhook_test.json"), WebhookTestResult>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/cluster_auto_boost_request.json"), Parameters<C["clusters"]["autoBoost"]>[1]>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/dkim_signing_update_request.json"), Parameters<C["dkimSigning"]["update"]>[0]>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/inbox_update_request.json"), Parameters<C["inboxes"]["update"]>[1]>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/ip_pool_add_ip_request.json"), Parameters<C["ipPools"]["addIp"]>[1]>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/ip_pool_cluster_request.json"), Parameters<C["ipPools"]["attach"]>[1]>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/ip_pool_create_request.json"), Parameters<C["ipPools"]["create"]>[0]>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/ip_pool_remove_ip_request.json"), Parameters<C["ipPools"]["removeIp"]>[1]>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/ip_pool_update_request.json"), Parameters<C["ipPools"]["update"]>[1]>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/network_warmup_request.json"), Parameters<C["network"]["warmup"]>[0]>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/outbound_retention_update_request.json"), Parameters<C["outboundRetention"]["update"]>[0]>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/sending_domain_move_request.json"), Parameters<C["sendingDomains"]["move"]>[1]>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/shield_site_create_request.json"), Parameters<C["shieldSites"]["create"]>[0]>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/shield_site_update_request.json"), Parameters<C["shieldSites"]["update"]>[1]>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/suppression_bulk_delete_request.json"), Parameters<C["suppressions"]["bulkDelete"]>[0]>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<typeof import("./fixtures/tenant_update_request.json"), Parameters<C["tenants"]["update"]>[1]>>().toEqualTypeOf<true>();
+  });
+
   it("type each method's resolved value", () => {
     const c = new PostShiba("sk_test", { teamId: "KjkAJW" });
     expectTypeOf(c.users.me).returns.resolves.toEqualTypeOf<User>();
@@ -138,6 +195,13 @@ describe("types", () => {
     expectTypeOf(c.suppressions.import).returns.resolves.toEqualTypeOf<SuppressionImport>();
     expectTypeOf(c.firewall.get).returns.resolves.toEqualTypeOf<Firewall>();
     expectTypeOf(c.firewall.addEntry).returns.resolves.toEqualTypeOf<FirewallEntry>();
+    expectTypeOf(c.ipPools.list).returns.resolves.toEqualTypeOf<IpPool[]>();
+    expectTypeOf(c.outboundMessages.raw).returns.resolves.toEqualTypeOf<ArrayBuffer>();
+    expectTypeOf(c.recipients.get).returns.resolves.toEqualTypeOf<Recipient>();
+    expectTypeOf(c.status.get).returns.resolves.toEqualTypeOf<TeamStatus>();
+    expectTypeOf(c.shieldSites.delete).returns.resolves.toEqualTypeOf<Empty>();
+    expectTypeOf(c.suppressions.bulkDelete).returns.resolves.toEqualTypeOf<SuppressionBulkDelete>();
+    expectTypeOf(c.webhooks.sendTest).returns.resolves.toEqualTypeOf<WebhookTestResult>();
   });
 
   it("reject a misspelled send field", () => {

@@ -1,0 +1,19 @@
+{
+  "id": "IpQwEr",
+  "address": "198.51.100.10",
+  "status": "warming",
+  "warmup_ends_at": "2026-10-09T12:00:00Z",
+  "warmup_mode": "slow",
+  "warmup_daily_cap": 400,
+  "warmup_hold": null,
+  "kind": "dedicated",
+  "classification": "transactional",
+  "provider": "aws",
+  "owned": true,
+  "available": false,
+  "cluster_ids": [
+    "NmQpXr"
+  ],
+  "ip_pool_ids": [],
+  "feedback_loops": []
+}

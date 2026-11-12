@@ -1,0 +1,4 @@
+{
+  "sign_with_primary_domain": false,
+  "primary_domain": "mail.example.com"
+}

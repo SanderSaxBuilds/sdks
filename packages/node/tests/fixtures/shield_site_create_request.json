@@ -1,0 +1,8 @@
+{
+  "shield_site": {
+    "name": "Signup",
+    "allowed_hostnames": "acme.com, app.acme.com",
+    "block_hosting": true,
+    "block_free_email": false
+  }
+}

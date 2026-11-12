@@ -1,0 +1,9 @@
+{
+  "emails": [
+    "blocked@example.com",
+    "old@example.com"
+  ],
+  "reason": "bounce",
+  "tenant_id": "WbLcFd",
+  "before": "2026-02-01T00:00:00Z"
+}
