@@ -13,25 +13,29 @@
     "url": "https://github.com/postshiba/postshiba-node/issues"
   },
   "type": "module",
-  "main": "./index.js",
+  "main": "./index.cjs",
   "types": "./index.d.ts",
   "exports": {
     ".": {
-      "types": "./index.d.ts",
       "import": "./index.js",
+      "require": "./index.cjs",
       "default": "./index.js"
     },
     "./nest": {
-      "types": "./nest.d.ts",
       "import": "./nest.js",
+      "require": "./nest.cjs",
       "default": "./nest.js"
     }
   },
   "files": [
     "index.js",
+    "index.cjs",
     "index.d.ts",
+    "index.d.cts",
     "nest.js",
+    "nest.cjs",
     "nest.d.ts",
+    "nest.d.cts",
     "LICENSE",
     "README.md",
     "CHANGELOG.md"
