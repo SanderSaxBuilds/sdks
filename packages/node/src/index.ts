@@ -49,7 +49,19 @@ export type * from "./types.js";
 export type PostShibaOptions = {
   baseUrl?: string;
   teamId?: Id;
+  /**
+   * How many times to retry a request the API refused without acting on it:
+   * `rate_limited`, `inject_unavailable`, or any reply with `retryable: true`.
+   * A `throttled` send is never retried. Default 2. Pass 0 to turn retries off.
+   */
+  maxRetries?: number;
 };
+
+const DEFAULT_MAX_RETRIES = 2;
+const BASE_RETRY_DELAY_MS = 500;
+const MAX_RETRY_DELAY_MS = 8_000;
+/** A Retry-After longer than this is not worth waiting for inside one call. */
+const MAX_RETRY_AFTER_MS = 60_000;
 
 export type SendOptions = {
   clusterId?: Id;
@@ -109,6 +121,38 @@ export class PostShibaError extends Error {
   }
 }
 
+/**
+ * Whether the API refused the request without acting on it.
+ *
+ * `throttled` is the cluster's hourly or 24-hour cap. Retrying right away hits
+ * the same cap, so it is never retried, even when the reply says retryable.
+ */
+export function isRetryable(err: PostShibaError): boolean {
+  if (err.code === "throttled") return false;
+  if (err.code === "rate_limited" || err.code === "inject_unavailable") return true;
+  return err.retryable === true;
+}
+
+/** Milliseconds from a Retry-After header, given as seconds or an HTTP date. */
+function parseRetryAfter(value: string | null): number | undefined {
+  if (value === null || value.trim() === "") return undefined;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const date = Date.parse(value);
+  if (Number.isNaN(date)) return undefined;
+  return Math.max(0, date - Date.now());
+}
+
+/** Exponential backoff with jitter: half of each step fixed, half random. */
+function backoffDelay(attempt: number): number {
+  const step = Math.min(MAX_RETRY_DELAY_MS, BASE_RETRY_DELAY_MS * 2 ** attempt);
+  return step / 2 + Math.random() * (step / 2);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function errorFromResponse(status: number, text: string): PostShibaError {
   const parsed = parseJson(text);
   const payload = asErrorPayload(parsed);
@@ -142,11 +186,13 @@ export class PostShiba {
   readonly apiKey: string;
   readonly baseUrl: string;
   readonly teamId?: Id;
+  readonly maxRetries: number;
 
   constructor(apiKey: string, options: PostShibaOptions = {}) {
     this.apiKey = apiKey;
     this.baseUrl = (options.baseUrl ?? "https://app.postshiba.com").replace(/\/$/, "");
     this.teamId = options.teamId;
+    this.maxRetries = Math.max(0, Math.floor(options.maxRetries ?? DEFAULT_MAX_RETRIES));
   }
 
   private requireTeamId(): Id {
@@ -168,14 +214,20 @@ export class PostShiba {
       ...opts.headers,
     };
     if (opts.body !== undefined) headers["Content-Type"] = "application/json";
+    const url = `${this.baseUrl}${resolved}`;
+    const body = opts.body === undefined ? undefined : JSON.stringify(opts.body);
 
-    const res = await fetch(`${this.baseUrl}${resolved}`, {
-      method,
-      headers,
-      body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
-    });
+    let res: Response;
+    for (let attempt = 0; ; attempt++) {
+      res = await fetch(url, { method, headers, body });
+      if (res.ok) break;
 
-    if (!res.ok) throw errorFromResponse(res.status, await res.text());
+      const err = errorFromResponse(res.status, await res.text());
+      if (attempt >= this.maxRetries || !isRetryable(err)) throw err;
+      const retryAfter = parseRetryAfter(res.headers.get("retry-after"));
+      if (retryAfter !== undefined && retryAfter > MAX_RETRY_AFTER_MS) throw err;
+      await sleep(retryAfter ?? backoffDelay(attempt));
+    }
 
     if (opts.binary) return (await res.arrayBuffer()) as T;
     return parseJson(await res.text()) as T;
