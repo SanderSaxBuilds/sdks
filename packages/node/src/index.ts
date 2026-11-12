@@ -1,7 +1,50 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-export type Id = string;
-export type Json = Record<string, unknown>;
+import type {
+  BoostClusterRequest,
+  Cluster,
+  CreateClusterRequest,
+  CreateFirewallEntryRequest,
+  CreateInboxRequest,
+  CreateSendingDomainRequest,
+  CreateSmtpCredentialRequest,
+  CreateSuppressionRequest,
+  CreateTemplateRequest,
+  CreateTenantRequest,
+  CreateWebhookEndpointRequest,
+  EmailTemplate,
+  Empty,
+  ErrorBody,
+  ExtendBoostRequest,
+  Firewall,
+  FirewallEntry,
+  Id,
+  ImportSuppressionsRequest,
+  InboundMessage,
+  Inbox,
+  MessageEvent,
+  NetworkAssignRequest,
+  NetworkClusterRequest,
+  NetworkCreateRequest,
+  NetworkIp,
+  NetworkReleaseRequest,
+  SendEmailRequest,
+  SendEmailResponse,
+  SendingDomain,
+  SmtpCredential,
+  Suppression,
+  SuppressionImport,
+  Tenant,
+  UpdateClusterRequest,
+  UpdateFirewallRequest,
+  UpdateSendingDomainRequest,
+  UpdateTemplateRequest,
+  UpdateWebhookEndpointRequest,
+  User,
+  WebhookEndpoint,
+} from "./types.js";
+
+export type * from "./types.js";
 
 export type PostShibaOptions = {
   baseUrl?: string;
@@ -38,8 +81,8 @@ function parseJson(text: string): unknown {
   }
 }
 
-function asErrorPayload(value: unknown): { error?: string; field?: string; message?: string } {
-  if (value && typeof value === "object") return value as { error?: string; field?: string; message?: string };
+function asErrorPayload(value: unknown): ErrorBody {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value as ErrorBody;
   return {};
 }
 
@@ -61,11 +104,11 @@ export class PostShiba {
     return this.teamId;
   }
 
-  private async request(
+  private async request<T>(
     method: string,
     path: string,
     opts: { body?: unknown; headers?: Record<string, string>; binary?: boolean; team?: boolean } = {},
-  ): Promise<unknown> {
+  ): Promise<T> {
     const resolved = opts.team ? `/api/v1/teams/${this.requireTeamId()}${path}` : path;
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiKey}`,
@@ -89,132 +132,132 @@ export class PostShiba {
       });
     }
 
-    if (opts.binary) return res.arrayBuffer();
-    return parseJson(await res.text());
+    if (opts.binary) return (await res.arrayBuffer()) as T;
+    return parseJson(await res.text()) as T;
   }
 
   readonly users = {
-    me: () => this.request("GET", "/api/v1/users/me"),
+    me: () => this.request<User>("GET", "/api/v1/users/me"),
   };
 
   readonly emails = {
-    send: (body: Json, options: SendOptions = {}) => {
+    send: (body: SendEmailRequest, options: SendOptions = {}) => {
       const headers: Record<string, string> = {};
       if (options.clusterId !== undefined && options.clusterId !== null && options.clusterId !== "") {
         headers["X-Capsule-Cluster-Id"] = String(options.clusterId);
       }
-      return this.request("POST", "/api/v1/emails", { body, headers });
+      return this.request<SendEmailResponse>("POST", "/api/v1/emails", { body, headers });
     },
-    sendOnCluster: (clusterId: Id, body: Json, options: ClusterSendOptions = {}) => {
+    sendOnCluster: (clusterId: Id, body: SendEmailRequest, options: ClusterSendOptions = {}) => {
       const payload = options.sandbox ? { ...body, sandbox: true } : body;
       const headers: Record<string, string> = {};
       if (options.idempotencyKey) headers["Idempotency-Key"] = options.idempotencyKey;
-      return this.request("POST", `/clusters/${clusterId}/sends`, { body: payload, headers, team: true });
+      return this.request<SendEmailResponse>("POST", `/clusters/${clusterId}/sends`, { body: payload, headers, team: true });
     },
   };
 
   readonly clusters = {
-    list: () => this.request("GET", "/clusters", { team: true }),
-    get: (id: Id) => this.request("GET", `/api/v1/clusters/${id}`),
-    create: (body: Json) => this.request("POST", "/clusters", { body, team: true }),
-    update: (id: Id, body: Json) => this.request("PATCH", `/api/v1/clusters/${id}`, { body }),
-    suspend: (id: Id) => this.request("POST", `/api/v1/clusters/${id}/suspend`),
-    resume: (id: Id) => this.request("POST", `/api/v1/clusters/${id}/resume`),
-    delete: (id: Id) => this.request("DELETE", `/api/v1/clusters/${id}`),
-    boost: (id: Id, body: Json) => this.request("POST", `/api/v1/clusters/${id}/boost`, { body }),
-    extendBoost: (id: Id, body: Json) => this.request("POST", `/api/v1/clusters/${id}/extend_boost`, { body }),
-    cancelBoost: (id: Id) => this.request("POST", `/api/v1/clusters/${id}/cancel_boost`),
+    list: () => this.request<Cluster[]>("GET", "/clusters", { team: true }),
+    get: (id: Id) => this.request<Cluster>("GET", `/api/v1/clusters/${id}`),
+    create: (body: CreateClusterRequest) => this.request<Cluster>("POST", "/clusters", { body, team: true }),
+    update: (id: Id, body: UpdateClusterRequest) => this.request<Cluster>("PATCH", `/api/v1/clusters/${id}`, { body }),
+    suspend: (id: Id) => this.request<Cluster>("POST", `/api/v1/clusters/${id}/suspend`),
+    resume: (id: Id) => this.request<Cluster>("POST", `/api/v1/clusters/${id}/resume`),
+    delete: (id: Id) => this.request<Cluster>("DELETE", `/api/v1/clusters/${id}`),
+    boost: (id: Id, body: BoostClusterRequest) => this.request<Cluster>("POST", `/api/v1/clusters/${id}/boost`, { body }),
+    extendBoost: (id: Id, body: ExtendBoostRequest) => this.request<Cluster>("POST", `/api/v1/clusters/${id}/extend_boost`, { body }),
+    cancelBoost: (id: Id) => this.request<Cluster>("POST", `/api/v1/clusters/${id}/cancel_boost`),
   };
 
   readonly network = {
-    list: () => this.request("GET", "/network", { team: true }),
-    create: (body: Json) => this.request("POST", "/network", { body, team: true }),
-    assign: (body: Json) => this.request("POST", "/network/assign", { body, team: true }),
-    unassign: (body: Json) => this.request("POST", "/network/unassign", { body, team: true }),
-    switch: (body: Json) => this.request("POST", "/network/switch", { body, team: true }),
-    release: (body: Json) => this.request("POST", "/network/release", { body, team: true }),
+    list: () => this.request<NetworkIp[]>("GET", "/network", { team: true }),
+    create: (body: NetworkCreateRequest) => this.request<NetworkIp>("POST", "/network", { body, team: true }),
+    assign: (body: NetworkAssignRequest) => this.request<NetworkIp>("POST", "/network/assign", { body, team: true }),
+    unassign: (body: NetworkClusterRequest) => this.request<NetworkIp>("POST", "/network/unassign", { body, team: true }),
+    switch: (body: NetworkClusterRequest) => this.request<NetworkIp>("POST", "/network/switch", { body, team: true }),
+    release: (body: NetworkReleaseRequest) => this.request<NetworkIp>("POST", "/network/release", { body, team: true }),
   };
 
   readonly sendingDomains = {
-    list: () => this.request("GET", "/sending_domains", { team: true }),
-    get: (id: Id) => this.request("GET", `/api/v1/sending_domains/${id}`),
-    create: (body: Json) => this.request("POST", "/sending_domains", { body, team: true }),
-    update: (id: Id, body: Json) => this.request("PATCH", `/api/v1/sending_domains/${id}`, { body }),
-    refresh: (id: Id) => this.request("POST", `/api/v1/sending_domains/${id}/refresh`),
-    verify: (id: Id) => this.request("POST", `/api/v1/sending_domains/${id}/verify`),
-    suspend: (id: Id) => this.request("POST", `/api/v1/sending_domains/${id}/suspend`),
-    resume: (id: Id) => this.request("POST", `/api/v1/sending_domains/${id}/resume`),
-    makePrimary: (id: Id) => this.request("POST", `/api/v1/sending_domains/${id}/make_primary`),
-    delete: (id: Id) => this.request("DELETE", `/api/v1/sending_domains/${id}`),
+    list: () => this.request<SendingDomain[]>("GET", "/sending_domains", { team: true }),
+    get: (id: Id) => this.request<SendingDomain>("GET", `/api/v1/sending_domains/${id}`),
+    create: (body: CreateSendingDomainRequest) => this.request<SendingDomain>("POST", "/sending_domains", { body, team: true }),
+    update: (id: Id, body: UpdateSendingDomainRequest) => this.request<SendingDomain>("PATCH", `/api/v1/sending_domains/${id}`, { body }),
+    refresh: (id: Id) => this.request<SendingDomain>("POST", `/api/v1/sending_domains/${id}/refresh`),
+    verify: (id: Id) => this.request<SendingDomain>("POST", `/api/v1/sending_domains/${id}/verify`),
+    suspend: (id: Id) => this.request<SendingDomain>("POST", `/api/v1/sending_domains/${id}/suspend`),
+    resume: (id: Id) => this.request<SendingDomain>("POST", `/api/v1/sending_domains/${id}/resume`),
+    makePrimary: (id: Id) => this.request<SendingDomain>("POST", `/api/v1/sending_domains/${id}/make_primary`),
+    delete: (id: Id) => this.request<Empty>("DELETE", `/api/v1/sending_domains/${id}`),
   };
 
   readonly tenants = {
-    list: () => this.request("GET", "/tenants", { team: true }),
-    get: (id: Id) => this.request("GET", `/api/v1/tenants/${id}`),
-    create: (body: Json) => this.request("POST", "/tenants", { body, team: true }),
-    delete: (id: Id) => this.request("DELETE", `/api/v1/tenants/${id}`),
+    list: () => this.request<Tenant[]>("GET", "/tenants", { team: true }),
+    get: (id: Id) => this.request<Tenant>("GET", `/api/v1/tenants/${id}`),
+    create: (body: CreateTenantRequest) => this.request<Tenant>("POST", "/tenants", { body, team: true }),
+    delete: (id: Id) => this.request<Empty>("DELETE", `/api/v1/tenants/${id}`),
   };
 
   readonly inboxes = {
-    list: () => this.request("GET", "/inboxes", { team: true }),
-    get: (id: Id) => this.request("GET", `/api/v1/inboxes/${id}`),
-    create: (body: Json) => this.request("POST", "/inboxes", { body, team: true }),
-    verify: (id: Id) => this.request("POST", `/api/v1/inboxes/${id}/verify`),
-    delete: (id: Id) => this.request("DELETE", `/api/v1/inboxes/${id}`),
+    list: () => this.request<Inbox[]>("GET", "/inboxes", { team: true }),
+    get: (id: Id) => this.request<Inbox>("GET", `/api/v1/inboxes/${id}`),
+    create: (body: CreateInboxRequest) => this.request<Inbox>("POST", "/inboxes", { body, team: true }),
+    verify: (id: Id) => this.request<Inbox>("POST", `/api/v1/inboxes/${id}/verify`),
+    delete: (id: Id) => this.request<Inbox>("DELETE", `/api/v1/inboxes/${id}`),
   };
 
   readonly messages = {
-    list: (inboxId: Id) => this.request("GET", `/api/v1/inboxes/${inboxId}/inbound_messages`),
-    get: (inboxId: Id, id: Id) => this.request("GET", `/api/v1/inboxes/${inboxId}/inbound_messages/${id}`),
+    list: (inboxId: Id) => this.request<InboundMessage[]>("GET", `/api/v1/inboxes/${inboxId}/inbound_messages`),
+    get: (inboxId: Id, id: Id) => this.request<InboundMessage>("GET", `/api/v1/inboxes/${inboxId}/inbound_messages/${id}`),
     downloadAttachment: (inboxId: Id, id: Id, index: number) =>
-      this.request("GET", `/api/v1/inboxes/${inboxId}/inbound_messages/${id}/attachments/${index}`, { binary: true }),
+      this.request<ArrayBuffer>("GET", `/api/v1/inboxes/${inboxId}/inbound_messages/${id}/attachments/${index}`, { binary: true }),
   };
 
   readonly events = {
-    listTeam: () => this.request("GET", "/message_events", { team: true }),
-    list: (clusterId: Id) => this.request("GET", `/clusters/${clusterId}/message_events`, { team: true }),
-    get: (id: Id) => this.request("GET", `/api/v1/message_events/${id}`),
+    listTeam: () => this.request<MessageEvent[]>("GET", "/message_events", { team: true }),
+    list: (clusterId: Id) => this.request<MessageEvent[]>("GET", `/clusters/${clusterId}/message_events`, { team: true }),
+    get: (id: Id) => this.request<MessageEvent>("GET", `/api/v1/message_events/${id}`),
   };
 
   readonly smtpCredentials = {
-    create: (clusterId: Id, body: Json) =>
-      this.request("POST", `/clusters/${clusterId}/smtp_credentials`, { body, team: true }),
+    create: (clusterId: Id, body: CreateSmtpCredentialRequest) =>
+      this.request<SmtpCredential>("POST", `/clusters/${clusterId}/smtp_credentials`, { body, team: true }),
     delete: (clusterId: Id, id: Id) =>
-      this.request("DELETE", `/clusters/${clusterId}/smtp_credentials/${id}`, { team: true }),
+      this.request<SmtpCredential>("DELETE", `/clusters/${clusterId}/smtp_credentials/${id}`, { team: true }),
   };
 
   readonly webhooks = {
-    list: () => this.request("GET", "/webhook_endpoints", { team: true }),
-    get: (id: Id) => this.request("GET", `/api/v1/webhook_endpoints/${id}`),
-    create: (body: Json) => this.request("POST", "/webhook_endpoints", { body, team: true }),
-    update: (id: Id, body: Json) => this.request("PATCH", `/api/v1/webhook_endpoints/${id}`, { body }),
-    delete: (id: Id) => this.request("DELETE", `/api/v1/webhook_endpoints/${id}`),
+    list: () => this.request<WebhookEndpoint[]>("GET", "/webhook_endpoints", { team: true }),
+    get: (id: Id) => this.request<WebhookEndpoint>("GET", `/api/v1/webhook_endpoints/${id}`),
+    create: (body: CreateWebhookEndpointRequest) => this.request<WebhookEndpoint>("POST", "/webhook_endpoints", { body, team: true }),
+    update: (id: Id, body: UpdateWebhookEndpointRequest) => this.request<WebhookEndpoint>("PATCH", `/api/v1/webhook_endpoints/${id}`, { body }),
+    delete: (id: Id) => this.request<Empty>("DELETE", `/api/v1/webhook_endpoints/${id}`),
     verify: (rawBody: string, timestamp: string, signature: string, secret: string) =>
       verifySignature(rawBody, timestamp, signature, secret),
   };
 
   readonly templates = {
-    list: () => this.request("GET", "/templates", { team: true }),
-    get: (id: Id) => this.request("GET", `/api/v1/templates/${id}`),
-    create: (body: Json) => this.request("POST", "/templates", { body, team: true }),
-    update: (id: Id, body: Json) => this.request("PATCH", `/api/v1/templates/${id}`, { body }),
-    publish: (id: Id) => this.request("POST", `/api/v1/templates/${id}/publish`),
-    duplicate: (id: Id) => this.request("POST", `/api/v1/templates/${id}/duplicate`),
-    delete: (id: Id) => this.request("DELETE", `/api/v1/templates/${id}`),
+    list: () => this.request<EmailTemplate[]>("GET", "/templates", { team: true }),
+    get: (id: Id) => this.request<EmailTemplate>("GET", `/api/v1/templates/${id}`),
+    create: (body: CreateTemplateRequest) => this.request<EmailTemplate>("POST", "/templates", { body, team: true }),
+    update: (id: Id, body: UpdateTemplateRequest) => this.request<EmailTemplate>("PATCH", `/api/v1/templates/${id}`, { body }),
+    publish: (id: Id) => this.request<EmailTemplate>("POST", `/api/v1/templates/${id}/publish`),
+    duplicate: (id: Id) => this.request<EmailTemplate>("POST", `/api/v1/templates/${id}/duplicate`),
+    delete: (id: Id) => this.request<Empty>("DELETE", `/api/v1/templates/${id}`),
   };
 
   readonly suppressions = {
-    list: () => this.request("GET", "/suppressions", { team: true }),
-    create: (body: Json) => this.request("POST", "/suppressions", { body, team: true }),
-    import: (body: Json) => this.request("POST", "/suppressions/import", { body, team: true }),
-    delete: (id: Id) => this.request("DELETE", `/api/v1/suppressions/${id}`),
+    list: () => this.request<Suppression[]>("GET", "/suppressions", { team: true }),
+    create: (body: CreateSuppressionRequest) => this.request<Suppression>("POST", "/suppressions", { body, team: true }),
+    import: (body: ImportSuppressionsRequest) => this.request<SuppressionImport>("POST", "/suppressions/import", { body, team: true }),
+    delete: (id: Id) => this.request<Empty>("DELETE", `/api/v1/suppressions/${id}`),
   };
 
   readonly firewall = {
-    get: () => this.request("GET", "/firewall", { team: true }),
-    update: (body: Json) => this.request("PATCH", "/firewall", { body, team: true }),
-    addEntry: (body: Json) => this.request("POST", "/firewall_entries", { body, team: true }),
-    deleteEntry: (id: Id) => this.request("DELETE", `/api/v1/firewall_entries/${id}`),
+    get: () => this.request<Firewall>("GET", "/firewall", { team: true }),
+    update: (body: UpdateFirewallRequest) => this.request<Firewall>("PATCH", "/firewall", { body, team: true }),
+    addEntry: (body: CreateFirewallEntryRequest) => this.request<FirewallEntry>("POST", "/firewall_entries", { body, team: true }),
+    deleteEntry: (id: Id) => this.request<Empty>("DELETE", `/api/v1/firewall_entries/${id}`),
   };
 }
 

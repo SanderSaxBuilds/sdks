@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import type { DynamicModule } from "@nestjs/common";
 import { PostShiba } from "./index.js";
-import type { Json, PostShibaOptions } from "./index.js";
+import type { PostShibaOptions, SendEmailRequest } from "./index.js";
 
 export { PostShiba, PostShibaError } from "./index.js";
 export type { Id, Json, PostShibaOptions } from "./index.js";
@@ -45,14 +45,14 @@ function uniqueArgsFromHeaders(headers: Record<string, string>): Record<string, 
 }
 
 export function sendMail(client: PostShiba, mail: MailFields) {
-  const body: Json = {
+  const body: SendEmailRequest = {
     from: mail.from,
     to: asList(mail.to),
     subject: mail.subject,
   };
   if (mail.html !== undefined) body.html = mail.html;
   if (mail.text !== undefined) body.text = mail.text;
-  if (mail.attachments !== undefined) body.attachments = mail.attachments;
+  if (mail.attachments !== undefined) body.attachments = mail.attachments as SendEmailRequest["attachments"];
   if (mail.cc !== undefined) body.cc = asList(mail.cc);
   if (mail.bcc !== undefined) body.bcc = asList(mail.bcc);
   if (mail.replyTo) body.reply_to = mail.replyTo;
