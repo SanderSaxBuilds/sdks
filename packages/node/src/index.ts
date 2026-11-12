@@ -60,16 +60,68 @@ export type ClusterSendOptions = {
   sandbox?: boolean;
 };
 
-export class PostShibaError extends Error {
-  readonly error: string;
-  readonly field: string | null;
+export type PostShibaErrorAttributes = {
+  error?: string;
+  field?: string | null;
+  message?: string;
+  status?: number;
+  retryable?: boolean;
+  rule?: string | null;
+  errors?: string[];
+  body?: unknown;
+};
 
-  constructor(attrs: { error?: string; field?: string | null; message?: string }) {
-    super(attrs.message ?? attrs.error ?? "Request failed");
+/** A non-2xx reply from the API. */
+export class PostShibaError extends Error {
+  /** The API's `error` string, such as `throttled` or `domain_unverified`. Match on this, not on `message`. */
+  readonly error: string;
+  /** Same as `error`. */
+  readonly code: string;
+  readonly field: string | null;
+  /** HTTP status of the reply. `0` when the error was not built from a reply. */
+  readonly status: number;
+  /** `true` only when the API says nothing was sent and the same request can go again. `undefined` when the reply does not say. */
+  readonly retryable: boolean | undefined;
+  /** The firewall check that refused a recipient, on `firewall` errors. */
+  readonly rule: string | null;
+  /** Validation messages, when the API returns `{"errors": [...]}`. */
+  readonly errors: string[];
+  /** The parsed reply body, or its text when it was not JSON. */
+  readonly body: unknown;
+
+  constructor(attrs: PostShibaErrorAttributes) {
+    const errors = attrs.errors ?? [];
+    super(
+      attrs.message ??
+        attrs.error ??
+        (errors.length > 0 ? errors.join(", ") : undefined) ??
+        (attrs.status ? `Request failed with status ${attrs.status}` : "Request failed"),
+    );
     this.name = "PostShibaError";
     this.error = attrs.error ?? "error";
+    this.code = this.error;
     this.field = attrs.field ?? null;
+    this.status = attrs.status ?? 0;
+    this.retryable = attrs.retryable;
+    this.rule = attrs.rule ?? null;
+    this.errors = errors;
+    this.body = attrs.body;
   }
+}
+
+function errorFromResponse(status: number, text: string): PostShibaError {
+  const parsed = parseJson(text);
+  const payload = asErrorPayload(parsed);
+  return new PostShibaError({
+    error: typeof payload.error === "string" ? payload.error : undefined,
+    field: typeof payload.field === "string" ? payload.field : null,
+    message: typeof payload.message === "string" ? payload.message : undefined,
+    status,
+    retryable: typeof payload.retryable === "boolean" ? payload.retryable : undefined,
+    rule: typeof payload.rule === "string" ? payload.rule : null,
+    errors: Array.isArray(payload.errors) ? payload.errors.filter((e): e is string => typeof e === "string") : undefined,
+    body: text === "" ? undefined : parsed,
+  });
 }
 
 function parseJson(text: string): unknown {
@@ -123,14 +175,7 @@ export class PostShiba {
       body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
     });
 
-    if (!res.ok) {
-      const payload = asErrorPayload(parseJson(await res.text()));
-      throw new PostShibaError({
-        error: payload.error,
-        field: payload.field ?? null,
-        message: payload.message,
-      });
-    }
+    if (!res.ok) throw errorFromResponse(res.status, await res.text());
 
     if (opts.binary) return (await res.arrayBuffer()) as T;
     return parseJson(await res.text()) as T;
